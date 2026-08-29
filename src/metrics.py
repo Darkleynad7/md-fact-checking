@@ -221,11 +221,30 @@ def retrieval_metrics(
     generated_questions: Optional[List[List[str]]] = None,
     reference_questions: Optional[List[List[str]]] = None,
 ) -> dict:
+    """
+    Compute retrieval metrics.
+
+    evidence_recall is always computed.
+
+    question_recall requires BOTH generated_questions and reference_questions.
+    The datasets used in this project (EuroVerdict, PolyTruth, dezinformare-ro)
+    do not ship gold sub-questions, so question_recall is only computed when
+    a caller explicitly provides both — it is never silently skipped with a
+    misleading 0.
+    """
     results = {
         "evidence_recall": evidence_recall(retrieved_snippets, reference_evidence)
     }
     if generated_questions is not None and reference_questions is not None:
         results["question_recall"] = question_recall(
             generated_questions, reference_questions
+        )
+    elif generated_questions is not None and reference_questions is None:
+        import warnings
+        warnings.warn(
+            "generated_questions supplied but reference_questions is None — "
+            "question_recall cannot be computed and is omitted from results.",
+            UserWarning,
+            stacklevel=2,
         )
     return results
