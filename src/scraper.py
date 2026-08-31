@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Iterator, List, Optional
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 
 BASE_URL = "https://stopfals.md"
-ARTICLE_LIST_PATH = "/ro/articles"
+ARTICLE_LIST_PATH = "/ro/campania/articole-fact-checking"
 REQUEST_DELAY = 1.5  # seconds between requests — be polite
 
 
@@ -111,20 +112,28 @@ def _parse_article(html: str, url: str) -> Optional[Article]:
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # --- Claim text ---
-    claim_el = (
-        soup.select_one(".claim-text")
-        or soup.select_one("blockquote")
-        or soup.select_one("h2")
-    )
-    claim_text = claim_el.get_text(strip=True) if claim_el else ""
-
-    # --- Verdict ---
-    verdict_el = soup.select_one(".verdict") or soup.select_one(".rating")
-    verdict = verdict_el.get_text(strip=True) if verdict_el else ""
+    # --- Claim text & Verdict ---
+    claim_el = soup.select_one(".content h1.title") or soup.select_one("h1.title")
+    title_text = claim_el.get_text(strip=True) if claim_el else ""
+    
+    verdict = ""
+    claim_text = title_text
+    
+    if ":" in title_text:
+        prefix = title_text.split(":", 1)[0].strip().upper()
+        if len(prefix) < 20 and ("FALS" in prefix or "ADEV" in prefix or "MANIPUL" in prefix):
+            verdict = prefix
+            claim_text = title_text.split(":", 1)[1].strip()
+    
+    if not verdict:
+        upper_title = title_text.upper()
+        if upper_title.startswith("FALS "):
+            verdict = "FALS"
+        elif "MANIPUL" in upper_title:
+            verdict = "MANIPULARE"
 
     # --- Justification (article body) ---
-    body_el = soup.select_one(".article-body") or soup.select_one("article")
+    body_el = soup.select_one(".content--article")
     paragraphs = body_el.find_all("p") if body_el else []
     justification = " ".join(p.get_text(strip=True) for p in paragraphs)
 
@@ -138,11 +147,13 @@ def _parse_article(html: str, url: str) -> Optional[Article]:
     evidence_text = "; ".join(sources[:10])
 
     # --- Date ---
-    date_el = soup.select_one("time") or soup.select_one(".date")
-    date = date_el.get("datetime", date_el.get_text(strip=True)) if date_el else ""
+    date_el = soup.select_one(".content span.date") or soup.select_one("span.date")
+    date_text = date_el.get_text(strip=True) if date_el else ""
+    # Filter out template vars if they still exist
+    date = date_text if not '{' in date_text else ""
 
     # --- Tags ---
-    tags = [t.get_text(strip=True) for t in soup.select(".tag, .tags a")]
+    tags = [t.get_text(strip=True) for t in soup.select(".badge, .tag, .tags a")]
 
     if not claim_text and not justification:
         return None
@@ -205,14 +216,14 @@ def main() -> None:
     parser.add_argument(
         "--pages",
         type=int,
-        default=10,
+        default=150,
         help="Maximum number of listing pages to scrape (default: 10)",
     )
     parser.add_argument(
         "--output",
         type=str,
-        default="data/raw/stopfals.jsonl",
-        help="Output JSONL file path (default: data/raw/stopfals.jsonl)",
+        default=str((Path(__file__).parent.parent / "data" / "raw" / "stopfals.jsonl").resolve()),
+        help="Output JSONL file path (relative to repo root)",
     )
     args = parser.parse_args()
 
