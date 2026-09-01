@@ -156,13 +156,17 @@ class HybridRetriever:
 # ---------------------------------------------------------------------------
 
 DECOMPOSE_PROMPT = """\
-Ești un verificator de fapte expert. Descompune afirmația de mai jos în {n} sub-întrebări \
-factuale care, dacă sunt răspunzute, permit verificarea completă a afirmației.
+<|system|>
+Ești un verificator de fapte expert.<|end|>
+<|user|>
+Descompune afirmația de mai jos în {n} sub-întrebări factuale care, dacă sunt răspunzute, permit verificarea completă a afirmației.
 Returnează DOAR o listă JSON de strings (sub-întrebările), fără explicații suplimentare.
 
 Afirmație: {claim}
 
-Sub-întrebări JSON:"""
+Sub-întrebări JSON:<|end|>
+<|assistant|>
+"""
 
 
 def decompose_claim(
@@ -219,7 +223,9 @@ def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500
 # ---------------------------------------------------------------------------
 
 VERIFY_PROMPT = """\
-Ești un verificator de fapte expert pentru Republica Moldova.
+<|system|>
+Ești un verificator de fapte expert pentru Republica Moldova.<|end|>
+<|user|>
 Analizează afirmația de mai jos folosind EXCLUSIV informațiile din dovezi.
 
 Afirmație: {claim}
@@ -233,7 +239,9 @@ Gândire pas cu pas (Chain-of-Thought):
 3. Există dovezi parțiale sau contradictorii?
 
 Verdict final (alege unul: ADEVĂRAT / FALS / PARȚIAL_ADEVĂRAT):
-Justificare (în română, max 3 propoziții):"""
+Justificare (în română, max 3 propoziții):<|end|>
+<|assistant|>
+"""
 
 
 def build_verify_prompt(claim: str, evidence: str) -> str:
