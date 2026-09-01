@@ -77,7 +77,7 @@ class DenseRetriever:
         self._model = SentenceTransformer(self.MODEL_NAME, device=device)
         print(f"[DenseRetriever] Encoding {len(corpus)} documents …")
         self._embeddings: np.ndarray = self._model.encode(
-            corpus,
+            [f"passage: {c}" for c in corpus],
             normalize_embeddings=True,
             batch_size=batch_size,
             show_progress_bar=True,
@@ -98,7 +98,7 @@ class DenseRetriever:
     def retrieve(self, query: str, top_k: int = 5) -> List[Tuple[str, float]]:
         """Return [(doc_text, score)] sorted by descending cosine similarity."""
         q_emb = self._model.encode(
-            [query], normalize_embeddings=True
+            [f"query: {query}"], normalize_embeddings=True
         ).astype(np.float32)
 
         if self._index is not None:
@@ -224,16 +224,20 @@ def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500
 
 VERIFY_PROMPT = """\
 <|system|>
-Ești un expert verificator de fapte pentru Republica Moldova. Evaluezi afirmații în română pe baza dovezilor furnizate. Răspunzi EXCLUSIV în baza contextului dat, fără cunoștințe externe.<|end|>
+Ești un expert verificator de fapte pentru Republica Moldova. Bazează-te EXCLUSIV pe dovezile primite.<|end|>
 <|user|>
-Afirmație: {claim}
+Analizează afirmația: {claim}
 
-Dovezi:
+Dovezi multiple:
 {evidence}
 
-Analizează afirmația pe baza dovezilor și oferă:
-Verdict: [ADEVĂRAT / FALS / PARȚIAL_ADEVĂRAT]
-Justificare: [explicație concisă în română, max 3 propoziții]<|end|>
+Gândire pas cu pas (Chain-of-Thought):
+1. Extrage informațiile din dovezi care susțin afirmația.
+2. Extrage informațiile din dovezi care contrazic afirmația.
+3. Sintetizează și alege verdictul cel mai obiectiv.
+
+Verdict final: [ADEVĂRAT / FALS / PARȚIAL_ADEVĂRAT]
+Justificare: [Max 3 propoziții în română]<|end|>
 <|assistant|>
 """
 
