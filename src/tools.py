@@ -202,10 +202,11 @@ def decompose_claim(
 # Evidence aggregator
 # ---------------------------------------------------------------------------
 
-def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500) -> str:
+def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 200) -> str:
     """
-    Concatenate retrieved snippets into a single evidence string,
-    roughly bounded by `max_tokens` (word count proxy).
+    Concatenate retrieved snippets into a single evidence string.
+    Hard-capped at 1000 chars and removes brackets to perfectly match the
+    LoRA training distribution from Notebook 3.
     """
     parts = []
     total = 0
@@ -213,9 +214,10 @@ def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500
         words = text.split()
         if total + len(words) > max_tokens:
             break
-        parts.append(f"[{i}] {text.strip()}")
+        parts.append(text.strip())
         total += len(words)
-    return "\n\n".join(parts)
+    # Join with spaces (no brackets) and strictly truncate to 1000 chars exactly like training
+    return " ".join(parts)[:1000]
 
 
 # ---------------------------------------------------------------------------
