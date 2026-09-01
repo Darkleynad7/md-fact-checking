@@ -269,9 +269,20 @@ def parse_verdict(model_output: str) -> Tuple[str, str]:
     Returns label as one of: 'true', 'false', 'partially_true', or 'unknown'.
     """
     text = model_output.strip()
+    
+    # Isolate the verdict section from Chain-of-Thought
+    verdict_text = text
+    for marker in ["Verdict final:", "Verdict:", "Verdict final (", "verdictul final este"]:
+        if marker.lower() in text.lower():
+            verdict_text = text.lower().split(marker.lower())[-1]
+            break
+
+    # Fix substring collision: sort keys descending by length
     label = "unknown"
-    for ro_key, en_val in LABEL_MAP.items():
-        if ro_key in text.lower():
+    sorted_labels = sorted(LABEL_MAP.items(), key=lambda x: len(x[0]), reverse=True)
+    
+    for ro_key, en_val in sorted_labels:
+        if ro_key in verdict_text.lower():
             label = en_val
             break
 
