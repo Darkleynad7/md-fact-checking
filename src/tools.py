@@ -77,7 +77,7 @@ class DenseRetriever:
         self._model = SentenceTransformer(self.MODEL_NAME, device=device)
         print(f"[DenseRetriever] Encoding {len(corpus)} documents …")
         self._embeddings: np.ndarray = self._model.encode(
-            corpus,
+            [f"passage: {c}" for c in corpus],
             normalize_embeddings=True,
             batch_size=batch_size,
             show_progress_bar=True,
@@ -98,7 +98,7 @@ class DenseRetriever:
     def retrieve(self, query: str, top_k: int = 5) -> List[Tuple[str, float]]:
         """Return [(doc_text, score)] sorted by descending cosine similarity."""
         q_emb = self._model.encode(
-            [query], normalize_embeddings=True
+            [f"query: {query}"], normalize_embeddings=True
         ).astype(np.float32)
 
         if self._index is not None:
@@ -202,10 +202,11 @@ def decompose_claim(
 # Evidence aggregator
 # ---------------------------------------------------------------------------
 
-def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500) -> str:
+def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 200) -> str:
     """
-    Concatenate retrieved snippets into a single evidence string,
-    roughly bounded by `max_tokens` (word count proxy).
+    Concatenate retrieved snippets into a single evidence string.
+    Hard-capped at 1000 chars and removes brackets to perfectly match the
+    LoRA training distribution from Notebook 3.
     """
     parts = []
     total = 0
@@ -213,9 +214,10 @@ def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 1500
         words = text.split()
         if total + len(words) > max_tokens:
             break
-        parts.append(f"[{i}] {text.strip()}")
+        parts.append(text.strip())
         total += len(words)
-    return "\n\n".join(parts)
+    # Join with spaces (no brackets) and strictly truncate to 1000 chars exactly like training
+    return " ".join(parts)[:1000]
 
 
 # ---------------------------------------------------------------------------
