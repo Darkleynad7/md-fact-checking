@@ -226,20 +226,16 @@ def aggregate_evidence(snippets: List[Tuple[str, float]], max_tokens: int = 200)
 
 VERIFY_PROMPT = """\
 <|system|>
-Ești un expert verificator de fapte pentru Republica Moldova. Bazează-te EXCLUSIV pe dovezile primite.<|end|>
+Ești un expert verificator de fapte pentru Republica Moldova. Evaluezi afirmații în română pe baza dovezilor furnizate. Răspunzi EXCLUSIV în baza contextului dat, fără cunoștințe externe.<|end|>
 <|user|>
-Analizează afirmația: {claim}
+Afirmație: {claim}
 
-Dovezi multiple:
+Dovezi:
 {evidence}
 
-Gândire pas cu pas (Chain-of-Thought):
-1. Extrage informațiile din dovezi care susțin afirmația.
-2. Extrage informațiile din dovezi care contrazic afirmația.
-3. Sintetizează și alege verdictul cel mai obiectiv.
-
-Verdict final: [ADEVĂRAT / FALS / PARȚIAL_ADEVĂRAT]
-Justificare: [Max 3 propoziții în română]<|end|>
+Analizează afirmația pe baza dovezilor și oferă:
+Verdict: [ADEVĂRAT / FALS / PARȚIAL_ADEVĂRAT]
+Justificare: [explicație concisă în română, max 3 propoziții]<|end|>
 <|assistant|>
 """
 
