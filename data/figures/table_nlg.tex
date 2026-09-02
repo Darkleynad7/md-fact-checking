@@ -1,0 +1,15 @@
+\begin{table}
+\caption{NLG metrics for justification quality (generative models).}
+\label{tab:nlg_results}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & rouge1_f1 & rougeL_f1 & bertscore_precision & bertscore_recall & bertscore_f1 & cosine_similarity \\
+Model &  &  &  &  &  &  \\
+\midrule
+\textbf{Llama Zero-Shot} & 0.062900 & 0.043000 & 0.193200 & 0.203700 & 0.197800 & 0.787600 \\
+\textbf{Llama CoT} & 0.053800 & 0.035300 & 0.183000 & 0.195000 & 0.188500 & 0.775700 \\
+\textbf{Llama LoRA} & 0.061000 & 0.041700 & 0.191900 & 0.202600 & 0.196500 & 0.786700 \\
+\textbf{Multi-Hop Agent} & 0.040900 & 0.029000 & 0.176900 & 0.194000 & 0.184500 & 0.776800 \\
+\bottomrule
+\end{tabular}
+\end{table}

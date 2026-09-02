@@ -1,0 +1,15 @@
+\begin{table}
+\caption{Ablation study: agent retriever variants (Macro-F1 on test set).}
+\label{tab:ablation_results}
+\begin{tabular}{lrrrrr}
+\toprule
+ & Accuracy & Macro-F1 & F1-false & F1-partially_true & F1-true \\
+Variant &  &  &  &  &  \\
+\midrule
+\textbf{A1: No-Decompose} & 0.875700 & 0.456400 & 0.921300 & 0.000000 & 0.904100 \\
+\textbf{A2: BM25-only} & 0.775100 & 0.409300 & 0.821400 & 0.000000 & 0.815800 \\
+\textbf{A3: Dense-only} & 0.201200 & 0.138100 & 0.158400 & 0.000000 & 0.393900 \\
+\textbf{A4: Full (main)} & 0.852100 & 0.447300 & 0.891400 & 0.000000 & 0.898000 \\
+\bottomrule
+\end{tabular}
+\end{table}
